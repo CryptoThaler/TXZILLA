@@ -16,6 +16,7 @@ TXZILLA is a Codex-optimized, agentic real estate intelligence scaffold for Texa
 - PostgreSQL + PostGIS
 - SQLAlchemy
 - Redis + Celery
+- Python 3.9 runtime
 - Pytest
 - YAML-based configuration
 - Codex repo guidance via AGENTS.md and Skills

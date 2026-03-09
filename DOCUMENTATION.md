@@ -80,7 +80,7 @@ Milestone 1 and Milestone 2 scaffold extended and validated.
 - extended provider persistence and service APIs to expose run artifacts, making county-download lineage queryable through `/providers/runs/{provider_run_id}/artifacts` and `/providers/artifacts`
 - expanded the Celery worker from a stub into executable county-sync tasks so scheduled jobs can run deterministic county ingests through the service layer instead of embedding logic in the worker module
 - added `.env.example` with deployment-oriented defaults for PostgreSQL, Redis, and county artifact storage
-- strengthened GitHub Actions to run the suite on Python 3.9 and 3.12 and to compile application, pipeline, and test modules during CI
+- aligned CI and the production container to the validated Python 3.9 runtime, and disabled matrix fail-fast so future GitHub failures preserve full job signal
 
 ### Runtime packaging and probes
 - added `auto_bootstrap_on_startup` runtime initialization so containerized API startup can apply the bootstrap path automatically when enabled
