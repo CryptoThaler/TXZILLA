@@ -1,0 +1,26 @@
+project:
+  name: TXZILLA
+  primary_region: central_texas
+
+regions:
+  central_texas:
+    counties: [Bexar, Comal, Guadalupe, Hays, Caldwell, Travis, Williamson]
+    corridor_nodes: [San Antonio, New Braunfels, Seguin, San Marcos, Kyle, Buda, Austin]
+  dfw:
+    counties: []
+    corridor_nodes: []
+  greater_houston:
+    counties: []
+    corridor_nodes: []
+
+orchestrator:
+  mode: pipeline
+  timeout_seconds: 30
+
+investment:
+  scoring_weights:
+    cash_flow: 0.30
+    appreciation: 0.25
+    market_growth: 0.20
+    risk_inverse: 0.15
+    liquidity: 0.10

@@ -1,0 +1,18 @@
+central_texas:
+  display_name: Central Texas
+  counties:
+    - Bexar
+    - Comal
+    - Guadalupe
+    - Hays
+    - Caldwell
+    - Travis
+    - Williamson
+
+dfw:
+  display_name: Dallas-Fort Worth
+  counties: []
+
+greater_houston:
+  display_name: Greater Houston
+  counties: []

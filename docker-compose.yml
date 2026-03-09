@@ -1,0 +1,106 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: txzilla_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: txzilla_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+    container_name: txzilla_api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR:-/var/lib/txzilla/county-downloads}
+      AUTO_BOOTSTRAP_ON_STARTUP: ${AUTO_BOOTSTRAP_ON_STARTUP:-true}
+      ENABLE_DEMO_DATA: ${ENABLE_DEMO_DATA:-false}
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-true}
+      COUNTY_SYNC_TASK_ENABLED: ${COUNTY_SYNC_TASK_ENABLED:-true}
+      COUNTY_SYNC_INTERVAL_HOURS: ${COUNTY_SYNC_INTERVAL_HOURS:-24}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - county_downloads:/var/lib/txzilla/county-downloads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/live', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: .
+    container_name: txzilla_worker
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR:-/var/lib/txzilla/county-downloads}
+      ENABLE_DEMO_DATA: ${ENABLE_DEMO_DATA:-false}
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-true}
+      COUNTY_SYNC_TASK_ENABLED: ${COUNTY_SYNC_TASK_ENABLED:-true}
+      COUNTY_SYNC_INTERVAL_HOURS: ${COUNTY_SYNC_INTERVAL_HOURS:-24}
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info"]
+    volumes:
+      - county_downloads:/var/lib/txzilla/county-downloads
+
+  beat:
+    build:
+      context: .
+    container_name: txzilla_beat
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR:-/var/lib/txzilla/county-downloads}
+      ENABLE_DEMO_DATA: ${ENABLE_DEMO_DATA:-false}
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-true}
+      COUNTY_SYNC_TASK_ENABLED: ${COUNTY_SYNC_TASK_ENABLED:-true}
+      COUNTY_SYNC_INTERVAL_HOURS: ${COUNTY_SYNC_INTERVAL_HOURS:-24}
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["celery", "-A", "app.worker.celery_app", "beat", "--loglevel=info"]
+    volumes:
+      - county_downloads:/var/lib/txzilla/county-downloads
+
+volumes:
+  postgres_data:
+  county_downloads:

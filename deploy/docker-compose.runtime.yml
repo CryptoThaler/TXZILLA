@@ -1,0 +1,114 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  bootstrap:
+    image: ${TXZILLA_IMAGE}
+    restart: "no"
+    env_file:
+      - runtime.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR}
+      ENABLE_DEMO_DATA: "false"
+      AUTO_BOOTSTRAP_ON_STARTUP: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["python", "-m", "app.bootstrap"]
+    volumes:
+      - county_downloads:${COUNTY_DOWNLOAD_DIR}
+
+  api:
+    image: ${TXZILLA_IMAGE}
+    restart: unless-stopped
+    env_file:
+      - runtime.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR}
+      ENABLE_DEMO_DATA: "false"
+      AUTO_BOOTSTRAP_ON_STARTUP: "false"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - county_downloads:${COUNTY_DOWNLOAD_DIR}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/live', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    image: ${TXZILLA_IMAGE}
+    restart: unless-stopped
+    env_file:
+      - runtime.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR}
+      ENABLE_DEMO_DATA: "false"
+      AUTO_BOOTSTRAP_ON_STARTUP: "false"
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info"]
+    volumes:
+      - county_downloads:${COUNTY_DOWNLOAD_DIR}
+
+  beat:
+    image: ${TXZILLA_IMAGE}
+    restart: unless-stopped
+    env_file:
+      - runtime.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      COUNTY_DOWNLOAD_DIR: ${COUNTY_DOWNLOAD_DIR}
+      ENABLE_DEMO_DATA: "false"
+      AUTO_BOOTSTRAP_ON_STARTUP: "false"
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["celery", "-A", "app.worker.celery_app", "beat", "--loglevel=info"]
+    volumes:
+      - county_downloads:${COUNTY_DOWNLOAD_DIR}
+
+volumes:
+  postgres_data:
+  county_downloads:
