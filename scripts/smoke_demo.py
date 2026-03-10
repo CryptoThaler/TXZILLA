@@ -11,6 +11,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.repositories.provider_repository import ProviderRepository
 
 
+def parse_json_response(response: httpx.Response, label: str) -> dict:
+    try:
+        return response.json()
+    except json.JSONDecodeError as exc:
+        snippet = response.text[:1000]
+        raise RuntimeError(
+            f"{label} returned non-JSON response: status={response.status_code}, body={snippet!r}"
+        ) from exc
+
+
 def wait_for_live(base_url: str, timeout_seconds: int) -> None:
     deadline = time.time() + timeout_seconds
     last_error = None
@@ -56,7 +66,7 @@ def run_demo(base_url: str) -> dict:
                 ],
             },
         )
-        provider_payload = provider_ingest.json()
+        provider_payload = parse_json_response(provider_ingest, "provider_ingest")
         run_id = provider_payload["run"]["provider_run_id"]
 
         ProviderRepository().store_run_artifact(
@@ -79,21 +89,21 @@ def run_demo(base_url: str) -> dict:
         counties = client.get("/counties/pipelines")
         bexar = client.post("/counties/pipelines/bexar/run-sync", json={})
 
-    output["live"] = {"status_code": live.status_code, "body": live.json()}
-    output["ready"] = {"status_code": ready.status_code, "body": ready.json()}
-    output["health"] = {"status_code": health.status_code, "body": health.json()}
+    output["live"] = {"status_code": live.status_code, "body": parse_json_response(live, "live")}
+    output["ready"] = {"status_code": ready.status_code, "body": parse_json_response(ready, "ready")}
+    output["health"] = {"status_code": health.status_code, "body": parse_json_response(health, "health")}
     output["provider_ingest"] = {
         "status_code": provider_ingest.status_code,
         "body": provider_payload,
     }
-    output["search"] = {"status_code": search.status_code, "body": search.json()}
-    output["provider_runs"] = {"status_code": runs.status_code, "body": runs.json()}
+    output["search"] = {"status_code": search.status_code, "body": parse_json_response(search, "search")}
+    output["provider_runs"] = {"status_code": runs.status_code, "body": parse_json_response(runs, "provider_runs")}
     output["provider_artifacts"] = {
         "status_code": artifacts.status_code,
-        "body": artifacts.json(),
+        "body": parse_json_response(artifacts, "provider_artifacts"),
     }
-    output["counties"] = {"status_code": counties.status_code, "body": counties.json()}
-    output["bexar_sync"] = {"status_code": bexar.status_code, "body": bexar.json()}
+    output["counties"] = {"status_code": counties.status_code, "body": parse_json_response(counties, "counties")}
+    output["bexar_sync"] = {"status_code": bexar.status_code, "body": parse_json_response(bexar, "bexar_sync")}
 
     if live.status_code != 200:
         raise RuntimeError("Smoke demo liveness check failed.")

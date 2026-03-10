@@ -1,37 +1,22 @@
 name: Smoke Demo
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   smoke-demo:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    services:
-      db:
-        image: postgis/postgis:16-3.4
-        env:
-          POSTGRES_DB: txzilla
-          POSTGRES_USER: txzilla
-          POSTGRES_PASSWORD: txzilla
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U txzilla -d txzilla"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
     env:
       APP_ENV: github-smoke
       APP_HOST: 127.0.0.1
       APP_PORT: 8000
       APP_TIMEZONE: America/Chicago
-      DATABASE_URL: postgresql+psycopg://txzilla:txzilla@127.0.0.1:5432/txzilla
-      REDIS_URL: redis://127.0.0.1:6379/0
+      DATABASE_URL: sqlite+pysqlite:///${{ github.workspace }}/artifacts/smoke-demo.db
+      REDIS_URL: redis://localhost:6379/0
       COUNTY_DOWNLOAD_DIR: ${{ github.workspace }}/artifacts/county-downloads
       ENABLE_BACKGROUND_JOBS: false
       COUNTY_SYNC_TASK_ENABLED: false

@@ -37,8 +37,9 @@ TXZILLA is a Codex-optimized, agentic real estate intelligence scaffold for Texa
 
 ## GitHub demo flow
 1. Open the `Smoke Demo` workflow in GitHub Actions.
-2. Run it manually with `workflow_dispatch`.
-3. Download the `smoke-demo-artifacts` artifact to inspect:
+2. It also runs automatically on pushes to `main`.
+3. You can run it manually with `workflow_dispatch`.
+4. Download the `smoke-demo-artifacts` artifact to inspect:
    - `smoke-demo.json`
    - `uvicorn.log`
 
