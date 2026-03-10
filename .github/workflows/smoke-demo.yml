@@ -1,0 +1,30 @@
+name: Smoke Demo
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-demo:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - name: Start API in background
+        run: |
+          ENABLE_STARTUP_DB_CHECK=false ENABLE_BACKGROUND_JOBS=false \
+            python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            curl -sf http://127.0.0.1:8000/live && break
+            sleep 2
+          done
+      - name: Run smoke demo
+        run: python scripts/smoke_demo.py --base-url http://127.0.0.1:8000

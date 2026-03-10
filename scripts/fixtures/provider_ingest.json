@@ -1,0 +1,29 @@
+{
+  "provider_name": "smoke_test_cad",
+  "provider_type": "cad",
+  "region_key": "central_texas",
+  "metadata": {"source": "smoke_test"},
+  "records": [
+    {
+      "county": "Hays",
+      "parcel_number": "HAY-SMOKE-0001",
+      "owner_name": "Smoke Test Owner",
+      "property_type": "single_family",
+      "address_line1": "1 Smoke Test Ln",
+      "city": "San Marcos",
+      "state": "TX",
+      "postal_code": "78666",
+      "assessed_total_value": 280000,
+      "assessed_land_value": 80000,
+      "assessed_improvement_value": 200000,
+      "tax_year": 2025,
+      "taxable_value": 280000,
+      "tax_amount_annual": 6200,
+      "acreage": 0.18,
+      "building_area_sqft": 1600,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "year_built": 2018
+    }
+  ]
+}

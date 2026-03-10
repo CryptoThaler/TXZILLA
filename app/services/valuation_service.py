@@ -38,6 +38,7 @@ def build_valuation(
         market_anchor_value = last_transaction.sale_price * (
             1 + market_context.market_growth_rate
         )
+        comparable_value = market_anchor_value
         confidence = 0.78
     elif latest_assessment:
         market_anchor_value = latest_assessment.assessed_total_value

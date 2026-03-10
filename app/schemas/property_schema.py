@@ -63,7 +63,7 @@ class PropertySummary(BaseModel):
     address_line1: str
     city: str
     county: str
-    region_key: str
+    region_key: Optional[str] = None
     property_type: str
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None

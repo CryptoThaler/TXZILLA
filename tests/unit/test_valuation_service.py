@@ -13,4 +13,4 @@ def test_build_valuation_is_deterministic_for_seed_property():
     assert valuation.market_anchor_value == 343530.0
     assert valuation.income_approach_value == 470400.0
     assert valuation.estimated_value == 400621.5
-    assert valuation.discount_to_value == 0.0889
+    assert valuation.discount_to_value == 0.1425
