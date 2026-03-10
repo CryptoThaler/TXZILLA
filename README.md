@@ -35,6 +35,13 @@ TXZILLA is a Codex-optimized, agentic real estate intelligence scaffold for Texa
 2. The `Release Image` workflow publishes `ghcr.io/<owner>/txzilla`.
 3. Deploy the published image with the manifests in [deploy/README.md](deploy/README.md) and [deploy/docker-compose.runtime.yml](deploy/docker-compose.runtime.yml).
 
+## GitHub demo flow
+1. Open the `Smoke Demo` workflow in GitHub Actions.
+2. Run it manually with `workflow_dispatch`.
+3. Download the `smoke-demo-artifacts` artifact to inspect:
+   - `smoke-demo.json`
+   - `uvicorn.log`
+
 ## Runtime endpoints
 - `/live` liveness probe
 - `/ready` readiness probe with database/bootstrap status

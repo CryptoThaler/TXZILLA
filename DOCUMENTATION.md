@@ -94,6 +94,11 @@ Milestone 1 and Milestone 2 scaffold extended and validated.
 - added `deploy/runtime.env.example` to separate runtime host configuration from developer-local `.env`
 - added `deploy/README.md` with the host-side procedure for pulling the image, running bootstrap, and starting the API/worker/beat stack
 
+### GitHub smoke demonstration
+- added a `Smoke Demo` workflow that provisions PostGIS and Redis in GitHub Actions, bootstraps the database, starts the API, runs a deterministic HTTP smoke flow, and uploads demo artifacts
+- added `scripts/smoke_demo.py` to demonstrate runtime probes, provider ingest, DB-backed search, provider run audit, provider artifact audit, county pipeline inspection, and the intentionally blocked Bexar sync path
+- added `artifacts/` to `.gitignore` so local and GitHub demo outputs are not committed
+
 ## Deployment procedure
 1. Copy `.env.example` into a real environment file or deployment secret store and set production values.
 2. Provision PostgreSQL with PostGIS and Redis.

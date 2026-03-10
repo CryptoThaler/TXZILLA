@@ -1,0 +1,61 @@
+name: Smoke Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      db:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: txzilla
+          POSTGRES_USER: txzilla
+          POSTGRES_PASSWORD: txzilla
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U txzilla -d txzilla"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    env:
+      APP_ENV: github-smoke
+      APP_HOST: 127.0.0.1
+      APP_PORT: 8000
+      APP_TIMEZONE: America/Chicago
+      DATABASE_URL: postgresql+psycopg://txzilla:txzilla@127.0.0.1:5432/txzilla
+      REDIS_URL: redis://127.0.0.1:6379/0
+      COUNTY_DOWNLOAD_DIR: ${{ github.workspace }}/artifacts/county-downloads
+      ENABLE_BACKGROUND_JOBS: false
+      COUNTY_SYNC_TASK_ENABLED: false
+      COUNTY_SYNC_INTERVAL_HOURS: 24
+      ENABLE_DEMO_DATA: false
+      ENABLE_GEOSPATIAL_FEATURES: true
+      ENABLE_STARTUP_DB_CHECK: true
+      AUTO_BOOTSTRAP_ON_STARTUP: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - run: mkdir -p artifacts/county-downloads
+      - run: python -m app.bootstrap
+      - run: nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > artifacts/uvicorn.log 2>&1 &
+      - run: python scripts/smoke_demo.py --base-url http://127.0.0.1:8000 --output artifacts/smoke-demo.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-demo-artifacts
+          path: artifacts/
